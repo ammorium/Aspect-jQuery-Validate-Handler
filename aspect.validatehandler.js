@@ -3,11 +3,13 @@
         var defaultSetting = {
             error: {
                 class: 'error',
-                time: 5000
+                time: 5000,
+                show: true
             },
             success: {
                 class: 'success',
-                time: 0
+                time: 0,
+                show: true
             },
             type: 'get',
             uri: '',
@@ -19,7 +21,7 @@
             successCallback: function() {},
             debug: false
         };
-        setting = $.extend(defaultSetting, setting);
+        setting = $.extend(true, defaultSetting, setting);
         var info_elements = '.' + setting.error.class + ', .' + setting.success.class;
         var $form = $(this);
 
@@ -32,10 +34,12 @@
                 code = message;
             }
             if (is_error) {
+                if(!setting.error.show) return;
                 message_info.addClass(setting.error.class);
                 time = setting.error.time;
                 message_text = setting.messages.error[code];
             } else {
+                if(!setting.success.show) return;
                 message_info.addClass(setting.success.class);
                 time = setting.success.time;
                 message_text = setting.messages.success[code];
