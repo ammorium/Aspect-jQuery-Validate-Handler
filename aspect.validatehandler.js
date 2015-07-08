@@ -4,12 +4,14 @@
             error: {
                 class: 'error',
                 time: 5000,
-                show: true
+                show: true,
+                callback: function(message) {}
             },
             success: {
                 class: 'success',
                 time: 0,
-                show: true
+                show: true,
+                callback: function(message) {}
             },
             type: 'get',
             uri: '',
@@ -18,7 +20,6 @@
                 success: {}
             },
             appendTo: 'form', // or input,
-            successCallback: function() {},
             debug: false
         };
         setting = $.extend(true, defaultSetting, setting);
@@ -34,15 +35,17 @@
                 code = message;
             }
             if (is_error) {
-                if(!setting.error.show) return;
                 message_info.addClass(setting.error.class);
                 time = setting.error.time;
-                message_text = setting.messages.error[code];
+                message_text = setting.error.messages[code];
+                setting.error.callback(message_text);
+                if(!setting.error.show) return;
             } else {
-                if(!setting.success.show) return;
                 message_info.addClass(setting.success.class);
                 time = setting.success.time;
-                message_text = setting.messages.success[code];
+                message_text = setting.success.messages[code];
+                setting.success.callback(message_text);
+                if(!setting.success.show) return;
             }
             message_info.text(message_text);
 
@@ -89,7 +92,6 @@
                     $form.data('has_errors', 1);
                 } else {
                     $form.data('success', 1);
-                    setting.successCallback();
                 }
 
                 if (Array.isArray(messages)) {
