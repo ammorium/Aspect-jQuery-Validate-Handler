@@ -102,6 +102,8 @@
                     show_message(messages, is_error);
                 }
             });
+        }).on('reset', function() {
+            $form.data('has_errors', 0).data('success', 0);
         });
         return this;
     };
