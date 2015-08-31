@@ -1,37 +1,38 @@
 (function ($) {
     $.fn.aspectValidateHandler = function (setting) {
+        var $form = $(this);
         var defaultSetting = {
             error: {
                 class: 'error',
                 time: 5000,
                 show: true,
-                callback: function(message) {}
+                messages: {},
+                callback: function (message) {
+                }
             },
             success: {
                 class: 'success',
                 time: 0,
                 show: true,
-                callback: function(message) {}
+                messages: {},
+                callback: function (message) {
+                }
             },
             type: 'get',
-            uri: '',
-            messages: {
-                error: {},
-                success: {}
-            },
+            uri: $form.attr('action'),
+            insertTo: 'after', // or before
             appendTo: 'form', // or input,
             debug: false
         };
         setting = $.extend(true, defaultSetting, setting);
         var info_elements = '.' + setting.error.class + ', .' + setting.success.class;
-        var $form = $(this);
 
         function show_message(message, is_error) {
             var code, message_text, message_info, time, remove_message_info;
             message_info = $('<div/>').hide();
-            if(typeof message === "object") {
+            if (typeof message === "object") {
                 code = message['code'];
-            }else {
+            } else {
                 code = message;
             }
             if (is_error) {
@@ -39,29 +40,41 @@
                 time = setting.error.time;
                 message_text = setting.error.messages[code];
                 setting.error.callback(message_text);
-                if(!setting.error.show) return;
+                if (!setting.error.show) return;
             } else {
                 message_info.addClass(setting.success.class);
                 time = setting.success.time;
                 message_text = setting.success.messages[code];
                 setting.success.callback(message_text);
-                if(!setting.success.show) return;
+                if (!setting.success.show) return;
             }
-            message_info.text(message_text);
+            message_info.html(message_text);
 
             switch (setting.appendTo) {
                 case 'form' :
                 {
-                    $form.append(message_info);
+                    if (setting.insertTo === 'after') {
+                        $form.append(message_info);
+                    } else if (setting.insertTo === 'before') {
+                        $form.prepend(message_info);
+                    }
                     break;
                 }
                 case 'input':
                 {
                     var to = message['to'];
-                    if(to === 'form' || to == null || !$(to).length) {
-                        $form.append(message_info);
-                    }else {
-                        $(to).after(message_info);
+                    if (to === 'form' || to == null || !$(to).length) {
+                        if (setting.insertTo === 'after') {
+                            $form.append(message_info);
+                        } else if (setting.insertTo === 'before') {
+                            $form.prepend(message_info);
+                        }
+                    } else {
+                        if (setting.insertTo === 'after') {
+                            $(to).after(message_info);
+                        } else if (setting.insertTo === 'before') {
+                            $(to).before(message_info);
+                        }
                     }
                     break;
                 }
@@ -80,19 +93,21 @@
 
         $form.on('submit', function (e) {
             e.preventDefault();
-            if (($form.find(info_elements).length && $form.data('has_errors')) || $form.data('success')) return;
+            if (($form.find(info_elements).length && $form.data('has_errors')) || $form.data('success') || $form.data('loading')) return;
+            $form.data('loading', 1);
             $.ajax(setting.uri, {
                 type: setting.type,
                 data: $form.serialize()
             }).done(function (response) {
                 var is_error = !response.success;
                 var messages = response.data;
-                if(setting.debug) console.log(response);
+                if (setting.debug) console.log(response);
                 if (is_error) {
                     $form.data('has_errors', 1);
                 } else {
                     $form.data('success', 1);
                 }
+                $form.data('loading', 0);
 
                 if (Array.isArray(messages)) {
                     for (var i = 0; i < messages.length; i++) {
@@ -102,7 +117,7 @@
                     show_message(messages, is_error);
                 }
             });
-        }).on('reset', function() {
+        }).on('reset', function () {
             $form.data('has_errors', 0).data('success', 0);
         });
         return this;
